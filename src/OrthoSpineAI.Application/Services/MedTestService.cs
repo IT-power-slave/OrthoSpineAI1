@@ -1,8 +1,10 @@
+using Microsoft.Extensions.Logging;
 using OrthoSpineAI.Application.Algorithm;
 using OrthoSpineAI.Application.DTOs;
 using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Enums;
+using OrthoSpineAI.Domain.Exceptions;
 using OrthoSpineAI.Domain.Interfaces;
 using System.Text.Json;
 
@@ -12,11 +14,13 @@ public class MedTestService : IMedTestService
 {
     private readonly IMedTestRepository _repo;
     private readonly AwwsEngine _awwsEngine;
+    private readonly ILogger<MedTestService> _logger;
 
-    public MedTestService(IMedTestRepository repo, AwwsEngine awwsEngine)
+    public MedTestService(IMedTestRepository repo, AwwsEngine awwsEngine, ILogger<MedTestService> logger)
     {
         _repo = repo;
         _awwsEngine = awwsEngine;
+        _logger = logger;
     }
 
     public async Task<MedTestDto> CreateAsync(CreateMedTestDto dto, CancellationToken ct = default)
@@ -38,6 +42,7 @@ public class MedTestService : IMedTestService
         };
         await _repo.AddAsync(entity, ct);
         await _repo.SaveChangesAsync(ct);
+        _logger.LogInformation("MedTest created: {MedTestId} for PatientId={PatientId}", entity.MedTestId, dto.PatientId);
         return MapToDto(entity);
     }
 
@@ -93,7 +98,10 @@ public class MedTestService : IMedTestService
     {
         var test = await _repo.GetByIdAsync(medTestId, ct);
         if (test is null)
-            return EmptyResult();
+        {
+            _logger.LogWarning("FinishTestAsync — MedTest not found: {MedTestId}", medTestId);
+            throw new MedTestNotFoundException(medTestId);
+        }
 
         // Build parameter dictionary for AwwsEngine
         var p = new Dictionary<string, object>();
@@ -152,6 +160,7 @@ public class MedTestService : IMedTestService
             GroupResultsJson    = JsonSerializer.Serialize(dto.GroupResults)
         };
         await _repo.SaveAwwsResultAsync(entity, ct);
+        _logger.LogInformation("FinishTestAsync completed: MedTestId={MedTestId} Variant={Variant}", medTestId, dto.PilsVariant);
 
         return dto with
         {
@@ -185,7 +194,7 @@ public class MedTestService : IMedTestService
     }
 
     private static AwwsResultDto EmptyResult() => new(0, 0, DateTime.UtcNow, string.Empty, 0, 0,
-        "Brak danych — test nie został znaleziony.", string.Empty,
+        "Brak danych — wynik AWWS nie istnieje.", string.Empty,
         new Dictionary<string, bool>());
 
     public async Task<DashboardDto> GetDashboardAsync(int patientCount, CancellationToken ct = default)

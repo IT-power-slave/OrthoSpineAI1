@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OrthoSpineAI.Application.Algorithm;
 using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Application.Services;
@@ -28,12 +30,24 @@ public partial class App : System.Windows.Application
             args.Handled = true;
         };
 
-        var dbPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "OrthoSpineAI", "ortho.db");
-        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+        // ── Configuration ──────────────────────────────────────────────────────
+        var config = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .Build();
 
+        var folder = Environment.ExpandEnvironmentVariables(
+            config["Database:Folder"] ?? "%LOCALAPPDATA%\\OrthoSpineAI");
+        var fileName = config["Database:FileName"] ?? "ortho.db";
+        var dbPath = Path.Combine(folder, fileName);
+        Directory.CreateDirectory(folder);
+
+        // ── DI container ───────────────────────────────────────────────────────
         var services = new ServiceCollection();
+
+        services.AddLogging(lb => lb
+            .AddConfiguration(config.GetSection("Logging"))
+            .AddConsole());
 
         // Infrastructure — Singleton DbContext is safe for a single-user desktop app
         services.AddInfrastructure(dbPath);

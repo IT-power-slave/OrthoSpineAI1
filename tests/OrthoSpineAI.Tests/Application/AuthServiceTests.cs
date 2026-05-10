@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using OrthoSpineAI.Application.Services;
 using OrthoSpineAI.Domain.Entities;
@@ -12,7 +13,7 @@ public class AuthServiceTests
 
     public AuthServiceTests()
     {
-        _service = new AuthService(_repo);
+        _service = new AuthService(_repo, NullLogger<AuthService>.Instance);
     }
 
     [Fact]

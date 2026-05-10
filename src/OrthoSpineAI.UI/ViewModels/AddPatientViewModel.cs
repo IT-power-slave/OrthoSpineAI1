@@ -22,6 +22,7 @@ public partial class AddPatientViewModel : ViewModelBase
     [ObservableProperty] private string _zipCode = string.Empty;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _peselError = string.Empty;
 
     public PatientSex[] SexOptions { get; } = [PatientSex.Male, PatientSex.Female];
 
@@ -59,6 +60,7 @@ public partial class AddPatientViewModel : ViewModelBase
     private bool CanSave() =>
         !string.IsNullOrWhiteSpace(FirstName) &&
         !string.IsNullOrWhiteSpace(LastName) &&
+        string.IsNullOrEmpty(PeselError) &&
         !IsBusy;
 
     [RelayCommand]
@@ -70,11 +72,24 @@ public partial class AddPatientViewModel : ViewModelBase
 
     partial void OnPeselChanged(string value)
     {
-        var info = PeselDecoder.Decode(value);
-        if (info is not null)
+        if (string.IsNullOrWhiteSpace(value))
         {
-            BirthDate = info.BirthDate;
-            Sex = info.Sex;
+            PeselError = string.Empty;
         }
+        else
+        {
+            var info = PeselDecoder.Decode(value);
+            if (info is not null)
+            {
+                PeselError = string.Empty;
+                BirthDate = info.BirthDate;
+                Sex = info.Sex;
+            }
+            else
+            {
+                PeselError = value.Length < 11 ? string.Empty : "Nieprawidłowy numer PESEL.";
+            }
+        }
+        SaveCommand.NotifyCanExecuteChanged();
     }
 }

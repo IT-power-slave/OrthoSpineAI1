@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using OrthoSpineAI.Application.DTOs;
 using OrthoSpineAI.Application.Services;
@@ -14,7 +15,7 @@ public class PatientServiceTests
 
     public PatientServiceTests()
     {
-        _service = new PatientService(_repo);
+        _service = new PatientService(_repo, NullLogger<PatientService>.Instance);
     }
 
     // ── GetAllAsync ───────────────────────────────────────────────────────────
@@ -72,6 +73,8 @@ public class PatientServiceTests
             PatientSex.Male, new DateTime(1990, 5, 15),
             "ul. Testowa 1", "Warszawa", "00-001", 1);
 
+        _repo.GetByPeselAsync("90051512357").Returns((Patient?)null);
+
         await _service.CreateAsync(dto);
 
         await _repo.Received(1).AddAsync(Arg.Is<Patient>(p =>
@@ -89,6 +92,8 @@ public class PatientServiceTests
             PatientSex.Female, new DateTime(2000, 3, 10),
             string.Empty, "Kraków", "30-001", 1);
 
+        _repo.GetByIdAsync(5).Returns(MakePatient(5, "Ewa", "Maj"));
+
         await _service.UpdateAsync(dto);
 
         await _repo.Received(1).UpdateAsync(Arg.Is<Patient>(p => p.PatientId == 5));
@@ -99,6 +104,7 @@ public class PatientServiceTests
     [Fact]
     public async Task DeleteAsync_CallsRepositoryDelete()
     {
+        _repo.GetByIdAsync(7).Returns(MakePatient(7, "X", "Y"));
         await _service.DeleteAsync(7);
         await _repo.Received(1).DeleteAsync(7);
     }

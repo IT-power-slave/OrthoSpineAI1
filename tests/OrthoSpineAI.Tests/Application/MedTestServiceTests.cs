@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using OrthoSpineAI.Application.Algorithm;
 using OrthoSpineAI.Application.DTOs;
@@ -16,7 +17,7 @@ public class MedTestServiceTests
 
     public MedTestServiceTests()
     {
-        _service = new MedTestService(_repo, _engine);
+        _service = new MedTestService(_repo, _engine, NullLogger<MedTestService>.Instance);
     }
 
     // ── CreateAsync ────────────────────────────────────────────────────────
@@ -77,14 +78,12 @@ public class MedTestServiceTests
     // ── FinishTestAsync ────────────────────────────────────────────────────
 
     [Fact]
-    public async Task FinishTestAsync_MissingTest_ReturnsEmptyResult()
+    public async Task FinishTestAsync_MissingTest_ThrowsMedTestNotFoundException()
     {
         _repo.GetByIdAsync(0, default).Returns((MedTest?)null);
 
-        var result = await _service.FinishTestAsync(0, 10);
-
-        Assert.Equal(0, result.MedTestId);
-        Assert.Contains("Brak danych", result.Conclusion);
+        await Assert.ThrowsAsync<OrthoSpineAI.Domain.Exceptions.MedTestNotFoundException>(
+            () => _service.FinishTestAsync(0, 10));
     }
 
     [Fact]
