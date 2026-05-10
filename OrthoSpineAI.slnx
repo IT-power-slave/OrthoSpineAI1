@@ -32,4 +32,7 @@
     <Project Path="src/OrthoSpineAI.Infrastructure/OrthoSpineAI.Infrastructure.csproj" />
     <Project Path="src/OrthoSpineAI.UI/OrthoSpineAI.UI.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OrthoSpineAI.Tests/OrthoSpineAI.Tests.csproj" />
+  </Folder>
 </Solution>

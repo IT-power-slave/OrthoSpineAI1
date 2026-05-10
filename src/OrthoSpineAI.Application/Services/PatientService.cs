@@ -1,10 +1,11 @@
 using OrthoSpineAI.Application.DTOs;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Interfaces;
 
 namespace OrthoSpineAI.Application.Services;
 
-public class PatientService
+public class PatientService : IPatientService
 {
     private readonly IPatientRepository _repo;
 

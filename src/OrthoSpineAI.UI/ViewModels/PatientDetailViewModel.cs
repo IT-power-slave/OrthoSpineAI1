@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Application.Services;
-using System.Windows;
 
 namespace OrthoSpineAI.UI.ViewModels;
 
@@ -10,6 +10,7 @@ public partial class PatientDetailViewModel : ViewModelBase
 {
     private readonly MedTestService _medTestService;
     private readonly PatientService _patientService;
+    private readonly IDialogService _dialogService;
 
     public PatientDto Patient { get; }
 
@@ -24,10 +25,11 @@ public partial class PatientDetailViewModel : ViewModelBase
     public event Action? DeletedRequested;
     public event Action<int>? ViewResultRequested;
 
-    public PatientDetailViewModel(MedTestService medTestService, PatientService patientService, PatientDto patient)
+    public PatientDetailViewModel(MedTestService medTestService, PatientService patientService, IDialogService dialogService, PatientDto patient)
     {
         _medTestService = medTestService;
         _patientService = patientService;
+        _dialogService = dialogService;
         Patient = patient;
     }
 
@@ -60,13 +62,10 @@ public partial class PatientDetailViewModel : ViewModelBase
     [RelayCommand]
     private async Task DeleteAsync()
     {
-        var confirm = MessageBox.Show(
-            $"Czy na pewno usunąć pacjenta {Patient.FullName}?\nOperacja jest nieodwracalna.",
-            "Potwierdzenie usunięcia",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-
-        if (confirm != MessageBoxResult.Yes) return;
+        if (!_dialogService.Confirm(
+                $"Czy na pewno usunąć pacjenta {Patient.FullName}?\nOperacja jest nieodwracalna.",
+                "Potwierdzenie usunięcia"))
+            return;
 
         await _patientService.DeleteAsync(Patient.PatientId);
         DeletedRequested?.Invoke();

@@ -1,5 +1,6 @@
 using OrthoSpineAI.Application.Algorithm;
 using OrthoSpineAI.Application.DTOs;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Enums;
 using OrthoSpineAI.Domain.Interfaces;
@@ -7,12 +8,16 @@ using System.Text.Json;
 
 namespace OrthoSpineAI.Application.Services;
 
-public class MedTestService
+public class MedTestService : IMedTestService
 {
     private readonly IMedTestRepository _repo;
+    private readonly AwwsEngine _awwsEngine;
 
-    public MedTestService(IMedTestRepository repo)
+    public MedTestService(IMedTestRepository repo, AwwsEngine awwsEngine)
     {
+        _repo = repo;
+        _awwsEngine = awwsEngine;
+
         _repo = repo;
     }
 
@@ -135,7 +140,7 @@ public class MedTestService
         p[AwwsParams.FLLD_NEGATIVE] = nm < -5;
         p[AwwsParams.FLLD_NEUTRAL]  = Math.Abs(nm) <= 5;
 
-        var engine = new AwwsEngine();
+        var engine = _awwsEngine;
         var dto = engine.Evaluate(p);
 
         // Persist the result

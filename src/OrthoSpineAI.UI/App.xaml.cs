@@ -1,8 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OrthoSpineAI.Application.Algorithm;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Application.Services;
 using OrthoSpineAI.Infrastructure;
 using OrthoSpineAI.Infrastructure.Persistence;
+using OrthoSpineAI.UI.Services;
 using OrthoSpineAI.UI.ViewModels;
 using System.IO;
 using System.Windows;
@@ -29,9 +32,17 @@ public partial class App : System.Windows.Application
 
         // Application services — Singleton so ShellViewModel (Singleton) can consume them
         services.AddSingleton<AuthService>();
+        services.AddSingleton<IAuthService>(sp => sp.GetRequiredService<AuthService>());
         services.AddSingleton<PatientService>();
+        services.AddSingleton<IPatientService>(sp => sp.GetRequiredService<PatientService>());
         services.AddSingleton<SurveyService>();
+        services.AddSingleton<ISurveyService>(sp => sp.GetRequiredService<SurveyService>());
+        services.AddSingleton<AwwsEngine>();
         services.AddSingleton<MedTestService>();
+        services.AddSingleton<IMedTestService>(sp => sp.GetRequiredService<MedTestService>());
+
+        // UI services
+        services.AddSingleton<IDialogService, WpfDialogService>();
 
         // ViewModels
         services.AddSingleton<ShellViewModel>();

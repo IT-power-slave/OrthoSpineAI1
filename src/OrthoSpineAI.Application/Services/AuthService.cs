@@ -1,9 +1,10 @@
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Interfaces;
 
 namespace OrthoSpineAI.Application.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly IUserRepository _repo;
 

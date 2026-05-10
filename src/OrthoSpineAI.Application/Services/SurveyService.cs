@@ -1,10 +1,11 @@
 using OrthoSpineAI.Application.DTOs;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Interfaces;
 
 namespace OrthoSpineAI.Application.Services;
 
-public class SurveyService
+public class SurveyService : ISurveyService
 {
     private readonly ISurveyRepository _repo;
 

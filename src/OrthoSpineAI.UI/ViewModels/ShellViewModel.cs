@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Application.Services;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Models;
@@ -18,6 +19,7 @@ public partial class ShellViewModel : ViewModelBase
     private readonly SurveyService _surveyService;
     private readonly MedTestService _medTestService;
     private readonly IDeviceDriver _device;
+    private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private ViewModelBase? _currentPage;
@@ -35,13 +37,15 @@ public partial class ShellViewModel : ViewModelBase
         PatientService patientService,
         SurveyService surveyService,
         MedTestService medTestService,
-        IDeviceDriver device)
+        IDeviceDriver device,
+        IDialogService dialogService)
     {
         _authService = authService;
         _patientService = patientService;
         _surveyService = surveyService;
         _medTestService = medTestService;
         _device = device;
+        _dialogService = dialogService;
 
         NavigateToLogin();
     }
@@ -106,7 +110,7 @@ public partial class ShellViewModel : ViewModelBase
 
     private void NavigateToPatientDetail(PatientDto patient)
     {
-        var vm = new PatientDetailViewModel(_medTestService, _patientService, patient);
+        var vm = new PatientDetailViewModel(_medTestService, _patientService, _dialogService, patient);
         vm.NewSurveyRequested += NavigateToSurveySelection;
         vm.EditRequested += NavigateToEditPatient;
         vm.BackRequested += NavigateToPatientList;
