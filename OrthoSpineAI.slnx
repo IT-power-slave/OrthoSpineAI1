@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="docs/AWWS_Algorithm.md" />
+    <File Path="docs/Database_Schema_Diagram.md" />
+    <File Path="docs/EF6_Database_Architecture_Analysis.md" />
+    <File Path="docs/Hardware_Protocol.md" />
+    <File Path="docs/Implementation_Guide.md" />
+    <File Path="docs/README.md" />
+    <File Path="docs/Seed_Data_Stages.md" />
+  </Folder>
+  <Folder Name="/Docs/Surveys/">
+    <File Path="docs/surveys/ankle.left.md" />
+    <File Path="docs/surveys/ankle.right.md" />
+    <File Path="docs/surveys/backbone.md" />
+    <File Path="docs/surveys/elbow.left.md" />
+    <File Path="docs/surveys/elbow.right.md" />
+    <File Path="docs/surveys/hip.left.md" />
+    <File Path="docs/surveys/hip.right.md" />
+    <File Path="docs/surveys/index.md" />
+    <File Path="docs/surveys/knee.left.md" />
+    <File Path="docs/surveys/knee.right.md" />
+    <File Path="docs/surveys/shoulder.left.md" />
+    <File Path="docs/surveys/shoulder.right.md" />
+    <File Path="docs/surveys/spineFlexibility.md" />
+    <File Path="docs/surveys/spineScreening.md" />
+    <File Path="docs/surveys/wrist.left.md" />
+    <File Path="docs/surveys/wrist.right.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/OrthoSpineAI.Application/OrthoSpineAI.Application.csproj" />
+    <Project Path="src/OrthoSpineAI.Domain/OrthoSpineAI.Domain.csproj" />
+    <Project Path="src/OrthoSpineAI.Infrastructure/OrthoSpineAI.Infrastructure.csproj" />
+    <Project Path="src/OrthoSpineAI.UI/OrthoSpineAI.UI.csproj" />
+  </Folder>
+</Solution>

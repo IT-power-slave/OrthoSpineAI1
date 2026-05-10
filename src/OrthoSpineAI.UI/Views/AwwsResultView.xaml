@@ -1,0 +1,183 @@
+<UserControl x:Class="OrthoSpineAI.UI.Views.AwwsResultView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Wynik badania AWWS / PiLS" FontSize="22" FontWeight="Bold"
+                       Foreground="#1565C0"/>
+            <DockPanel Margin="0,4,0,0">
+                <TextBlock FontSize="13" Foreground="#616161">
+                    <Run Text="Pacjent: "/>
+                    <Run Text="{Binding Patient.FullName, Mode=OneWay}" FontWeight="SemiBold"/>
+                </TextBlock>
+                <TextBlock FontSize="13" Foreground="#9E9E9E" HorizontalAlignment="Right">
+                    <Run Text="Data badania: "/>
+                    <Run Text="{Binding ExaminationDateText, Mode=OneWay}" FontWeight="SemiBold"/>
+                </TextBlock>
+            </DockPanel>
+            <TextBlock FontSize="12" Foreground="#9E9E9E" Margin="0,2,0,0">
+                <Run Text="Definicja: "/>
+                <Run Text="{Binding Result.SurveyName, Mode=OneWay}"/>
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Summary cards -->
+        <UniformGrid Grid.Row="1" Columns="2" Margin="0,0,0,16">
+            <!-- PiLS variant badge -->
+            <Border BorderBrush="#E0E0E0" BorderThickness="1"
+                    CornerRadius="6" Padding="16" Margin="0,0,8,0"
+                    Background="{Binding PilsBadgeColor, Mode=OneWay}">
+                <StackPanel>
+                    <TextBlock Text="Wariant PiLS" FontSize="12" Foreground="White" Opacity="0.85"/>
+                    <TextBlock Text="{Binding Result.PilsVariant, Mode=OneWay}" FontSize="42" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding PilsLabel, Mode=OneWay}" FontSize="11" Foreground="White" Opacity="0.9"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+            <!-- Control key -->
+            <Border Background="#E3F2FD" BorderBrush="#90CAF9" BorderThickness="1"
+                    CornerRadius="6" Padding="16" Margin="8,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="Klucz kontroli" FontSize="12" Foreground="#424242"/>
+                    <TextBlock Text="{Binding Result.PilsControlKey, Mode=OneWay}" FontSize="42" FontWeight="Bold"
+                               Foreground="#1565C0"/>
+                    <TextBlock Text="Liczba aktywnych grup diagnostycznych" FontSize="11"
+                               Foreground="#616161" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- Conclusion + group results -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Conclusion card -->
+                <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
+                        CornerRadius="6" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Wniosek kliniczny" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <TextBlock Text="{Binding Result.Conclusion, Mode=OneWay}" FontSize="13"
+                                   TextWrapping="Wrap" Foreground="#424242"/>
+                        <Separator Margin="0,10"/>
+                        <TextBlock Text="Zalecenie kontrolne" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding Result.ControlRecommendation, Mode=OneWay}" FontSize="13"
+                                   TextWrapping="Wrap" Foreground="#424242"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Group results -->
+                <TextBlock Text="Wyniki grup diagnostycznych" FontSize="14" FontWeight="SemiBold"
+                           Margin="0,0,0,8"/>
+                <ItemsControl ItemsSource="{Binding GroupRows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,4" BorderThickness="1" CornerRadius="4" Padding="12,8">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPositive}" Value="True">
+                                                <Setter Property="Background" Value="#F1F8E9"/>
+                                                <Setter Property="BorderBrush" Value="#A5D6A7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DockPanel>
+                                    <Ellipse Width="10" Height="10" DockPanel.Dock="Left"
+                                             VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#E0E0E0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPositive}" Value="True">
+                                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding Group}" FontSize="13" Foreground="#424242"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Nie wykryto"/>
+                                                <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPositive}" Value="True">
+                                                        <Setter Property="Text" Value="Wykryto ✓"/>
+                                                        <Setter Property="Foreground" Value="#388E3C"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <!-- Copy to clipboard -->
+            <Button Content="📋 Kopiuj wynik"
+                    Command="{Binding CopyToClipboardCommand}"
+                    Margin="0,0,12,0" Padding="16,10"
+                    Background="#F5F5F5" Foreground="#424242"
+                    BorderThickness="1" BorderBrush="#BDBDBD" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            <!-- New survey -->
+            <Button Content="Nowe badanie"
+                    Command="{Binding NewSurveyCommand}"
+                    Margin="0,0,12,0" Padding="20,10"
+                    Background="#43A047" Foreground="White" BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            <!-- Back to list -->
+            <Button Content="Wróć do listy pacjentów"
+                    Command="{Binding FinishCommand}"
+                    Padding="24,10" Background="#1565C0" Foreground="White"
+                    BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,198 @@
+<UserControl x:Class="OrthoSpineAI.UI.Views.SurveySelectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,8">
+            <TextBlock Text="Wybór badania" FontSize="22" FontWeight="Bold" Foreground="#1565C0"/>
+            <TextBlock FontSize="13" Foreground="#616161" Margin="0,4,0,0">
+                <Run Text="Pacjent: "/>
+                <Run Text="{Binding Patient.FullName, Mode=OneWay}" FontWeight="SemiBold"/>
+                <Run Text=" | Wiek: "/>
+                <Run Text="{Binding Patient.AgeYears, Mode=OneWay}"/>
+                <Run Text=" lat"/>
+            </TextBlock>
+        </StackPanel>
+
+        <Separator Grid.Row="1" Margin="0,8,0,16"/>
+
+        <!-- Survey card grid -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Definitions}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="220" Margin="0,0,16,16" CornerRadius="8"
+                                BorderThickness="2" Cursor="Hand">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                    <Setter Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect BlurRadius="6" ShadowDepth="2"
+                                                              Opacity="0.10" Direction="270"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Border.Style>
+                            <!-- Card is activated by clicking its Button area -->
+                            <Button Command="{Binding DataContext.SelectDefinitionCommand,
+                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}"
+                                    BorderThickness="0" Background="Transparent" Padding="0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <ContentPresenter/>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <Grid Margin="16">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Icon circle -->
+                                    <Ellipse Grid.Row="0" Width="44" Height="44"
+                                             Fill="#E3F2FD" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                                    <TextBlock Grid.Row="0" Text="📋" FontSize="22"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"
+                                               Margin="10,0,0,10"/>
+
+                                    <!-- Name -->
+                                    <TextBlock Grid.Row="1" Text="{Binding Name}"
+                                               FontSize="14" FontWeight="SemiBold"
+                                               TextWrapping="Wrap" Margin="0,0,0,6"/>
+
+                                    <!-- Stage count badge -->
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
+                                        <Border Background="#E8F5E9" CornerRadius="4" Padding="6,2">
+                                            <TextBlock FontSize="11" Foreground="#388E3C">
+                                                <Run Text="{Binding Stages.Count, Mode=OneWay}"/>
+                                                <Run Text=" etapów"/>
+                                            </TextBlock>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Selected indicator -->
+                                    <Border Grid.Row="4" Height="3" CornerRadius="2" Margin="0,4,0,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource IsEqualMultiConverter}">
+                                                                <Binding Path="DataContext.SelectedDefinition"
+                                                                         RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                                                                <Binding/>
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="Background" Value="#1565C0"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+                                </Grid>
+                            </Button>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <ProgressBar Grid.Row="2" IsIndeterminate="True" Height="3" VerticalAlignment="Top"
+                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Selection hint -->
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12" Foreground="#757575">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Text" Value="Wybierz badanie z listy powyżej"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedDefinition}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12" Foreground="#388E3C"
+                       Visibility="{Binding SelectedDefinition,
+                           Converter={StaticResource StringToVisibilityConverter}}">
+                <Run Text="Wybrano: "/>
+                <Run Text="{Binding SelectedDefinition.Name, Mode=OneWay}" FontWeight="SemiBold"/>
+            </TextBlock>
+
+            <Button Grid.Column="1" Content="← Wróć" Command="{Binding BackCommand}"
+                    Padding="20,8" Background="#E0E0E0" BorderThickness="0" Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="4"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <Button Grid.Column="3" Content="Rozpocznij badanie →" Command="{Binding StartSurveyCommand}"
+                    Padding="20,8" Background="#1565C0" Foreground="White"
+                    BorderThickness="0" Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="4"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Border.Background" Value="#90A4AE"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>
+

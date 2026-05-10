@@ -1,0 +1,116 @@
+<UserControl x:Class="OrthoSpineAI.UI.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Welcome -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock FontSize="26" FontWeight="Bold" Foreground="#1565C0">
+                <Run Text="Witaj, "/>
+                <Run Text="{Binding CurrentUserName, Mode=OneWay}"/>
+                <Run Text="!"/>
+            </TextBlock>
+            <TextBlock Text="Panel główny — OrthoSpine AI" FontSize="13" Foreground="#9E9E9E" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Stat cards -->
+        <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,28">
+            <!-- Patients -->
+            <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
+                    CornerRadius="8" Padding="20" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="Pacjenci" FontSize="12" Foreground="#9E9E9E" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding TotalPatients}" FontSize="40" FontWeight="Bold" Foreground="#1565C0"/>
+                    <Button Content="Otwórz listę →" Command="{Binding GoToPatientsCommand}"
+                            Background="Transparent" Foreground="#1565C0"
+                            BorderThickness="0" HorizontalAlignment="Left"
+                            Padding="0,8,0,0" Cursor="Hand" FontSize="12"/>
+                </StackPanel>
+            </Border>
+            <!-- Tests today -->
+            <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
+                    CornerRadius="8" Padding="20" Margin="6,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="Badania dziś" FontSize="12" Foreground="#9E9E9E" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding TestsToday}" FontSize="40" FontWeight="Bold" Foreground="#43A047"/>
+                </StackPanel>
+            </Border>
+            <!-- Tests this month -->
+            <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
+                    CornerRadius="8" Padding="20" Margin="12,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="Badania w tym miesiącu" FontSize="12" Foreground="#9E9E9E" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding TestsThisMonth}" FontSize="40" FontWeight="Bold" Foreground="#FB8C00"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- Recent tests -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="Ostatnie badania" FontSize="15" FontWeight="SemiBold"
+                       Foreground="#424242" Margin="0,0,0,10"/>
+
+            <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6">
+                <DataGrid ItemsSource="{Binding RecentTests}"
+                          AutoGenerateColumns="False" IsReadOnly="True"
+                          GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                          SelectionMode="Single" CanUserReorderColumns="False"
+                          CanUserResizeRows="False" RowHeight="36"
+                          BorderThickness="0" Background="White">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Data" Width="150"
+                            Binding="{Binding ExaminationDate, StringFormat=\{0:dd.MM.yyyy HH:mm\}}"/>
+                        <DataGridTextColumn Header="Pacjent" Width="*"
+                            Binding="{Binding PatientFullName}"/>
+                        <DataGridTextColumn Header="Badanie" Width="120"
+                            Binding="{Binding SurveyName}"/>
+                        <DataGridTextColumn Header="Wariant PiLS" Width="90"
+                            Binding="{Binding PilsVariant}"/>
+                        <DataGridTemplateColumn Width="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Pokaż wynik"
+                                            Command="{Binding DataContext.OpenResultCommand,
+                                                RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Background="Transparent" Foreground="#1565C0"
+                                            BorderThickness="0" Cursor="Hand" FontSize="12"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <TextBlock Grid.Row="1" Text="Brak wykonanych badań." FontSize="13" Foreground="#9E9E9E"
+                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding RecentTests.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <ProgressBar Grid.Row="1" IsIndeterminate="True" Height="3" VerticalAlignment="Top"
+                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+        </Grid>
+    </Grid>
+</UserControl>
