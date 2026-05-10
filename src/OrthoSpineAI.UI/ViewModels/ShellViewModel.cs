@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
 using OrthoSpineAI.Application.Interfaces;
-using OrthoSpineAI.Application.Services;
 using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Models;
 
@@ -14,10 +13,10 @@ namespace OrthoSpineAI.UI.ViewModels;
 /// </summary>
 public partial class ShellViewModel : ViewModelBase
 {
-    private readonly AuthService _authService;
-    private readonly PatientService _patientService;
-    private readonly SurveyService _surveyService;
-    private readonly MedTestService _medTestService;
+    private readonly IAuthService _authService;
+    private readonly IPatientService _patientService;
+    private readonly ISurveyService _surveyService;
+    private readonly IMedTestService _medTestService;
     private readonly IDeviceDriver _device;
     private readonly IDialogService _dialogService;
 
@@ -33,10 +32,10 @@ public partial class ShellViewModel : ViewModelBase
     private SystemUser? _loggedUser;
 
     public ShellViewModel(
-        AuthService authService,
-        PatientService patientService,
-        SurveyService surveyService,
-        MedTestService medTestService,
+        IAuthService authService,
+        IPatientService patientService,
+        ISurveyService surveyService,
+        IMedTestService medTestService,
         IDeviceDriver device,
         IDialogService dialogService)
     {

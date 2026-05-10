@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
-using OrthoSpineAI.Application.Services;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Models;
 using System.Collections.ObjectModel;
 
@@ -9,7 +9,7 @@ namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class SurveyRunViewModel : ViewModelBase, IDisposable
 {
-    private readonly MedTestService _medTestService;
+    private readonly IMedTestService _medTestService;
     private readonly IDeviceDriver _device;
     private readonly CancellationTokenSource _cts = new();
     private int _medTestId;
@@ -58,7 +58,7 @@ public partial class SurveyRunViewModel : ViewModelBase, IDisposable
     public event Action? Cancelled;
 
     public SurveyRunViewModel(
-        MedTestService medTestService,
+        IMedTestService medTestService,
         IDeviceDriver device,
         PatientDto patient,
         SurveyDefinitionDto definition,

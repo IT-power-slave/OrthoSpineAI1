@@ -1,14 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
-using OrthoSpineAI.Application.Services;
+using OrthoSpineAI.Application.Interfaces;
 
 namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class DashboardViewModel : ViewModelBase
 {
-    private readonly PatientService _patientService;
-    private readonly MedTestService _medTestService;
+    private readonly IPatientService _patientService;
+    private readonly IMedTestService _medTestService;
 
     [ObservableProperty] private int _totalPatients;
     [ObservableProperty] private int _testsToday;
@@ -21,7 +21,7 @@ public partial class DashboardViewModel : ViewModelBase
     public event Action? PatientsRequested;
     public event Action<int>? ViewResultRequested;   // medTestId
 
-    public DashboardViewModel(PatientService patientService, MedTestService medTestService, string userName)
+    public DashboardViewModel(IPatientService patientService, IMedTestService medTestService, string userName)
     {
         _patientService = patientService;
         _medTestService = medTestService;

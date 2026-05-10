@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
-using OrthoSpineAI.Application.Services;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Application.Utilities;
 using OrthoSpineAI.Domain.Enums;
 
@@ -9,7 +9,7 @@ namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class AddPatientViewModel : ViewModelBase
 {
-    private readonly PatientService _patientService;
+    private readonly IPatientService _patientService;
     private readonly int _clinicId;
 
     [ObservableProperty] private string _firstName = string.Empty;
@@ -28,7 +28,7 @@ public partial class AddPatientViewModel : ViewModelBase
     public event Action<PatientDto>? PatientSaved;
     public event Action? Cancelled;
 
-    public AddPatientViewModel(PatientService patientService, int clinicId)
+    public AddPatientViewModel(IPatientService patientService, int clinicId)
     {
         _patientService = patientService;
         _clinicId = clinicId;

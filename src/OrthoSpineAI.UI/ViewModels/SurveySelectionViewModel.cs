@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
-using OrthoSpineAI.Application.Services;
+using OrthoSpineAI.Application.Interfaces;
 
 namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class SurveySelectionViewModel : ViewModelBase
 {
-    private readonly SurveyService _surveyService;
+    private readonly ISurveyService _surveyService;
 
     [ObservableProperty]
     private IReadOnlyList<SurveyDefinitionDto> _definitions = [];
@@ -23,7 +23,7 @@ public partial class SurveySelectionViewModel : ViewModelBase
     public event Action<PatientDto, SurveyDefinitionDto>? SurveyStartRequested;
     public event Action? BackRequested;
 
-    public SurveySelectionViewModel(SurveyService surveyService, PatientDto patient)
+    public SurveySelectionViewModel(ISurveyService surveyService, PatientDto patient)
     {
         _surveyService = surveyService;
         Patient = patient;

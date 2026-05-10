@@ -2,14 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
 using OrthoSpineAI.Application.Interfaces;
-using OrthoSpineAI.Application.Services;
 
 namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class PatientDetailViewModel : ViewModelBase
 {
-    private readonly MedTestService _medTestService;
-    private readonly PatientService _patientService;
+    private readonly IMedTestService _medTestService;
+    private readonly IPatientService _patientService;
     private readonly IDialogService _dialogService;
 
     public PatientDto Patient { get; }
@@ -25,7 +24,7 @@ public partial class PatientDetailViewModel : ViewModelBase
     public event Action? DeletedRequested;
     public event Action<int>? ViewResultRequested;
 
-    public PatientDetailViewModel(MedTestService medTestService, PatientService patientService, IDialogService dialogService, PatientDto patient)
+    public PatientDetailViewModel(IMedTestService medTestService, IPatientService patientService, IDialogService dialogService, PatientDto patient)
     {
         _medTestService = medTestService;
         _patientService = patientService;

@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OrthoSpineAI.Application.DTOs;
-using OrthoSpineAI.Application.Services;
+using OrthoSpineAI.Application.Interfaces;
 
 namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class PatientListViewModel : ViewModelBase
 {
-    private readonly PatientService _patientService;
+    private readonly IPatientService _patientService;
     private IReadOnlyList<PatientDto> _allPatients = [];
 
     [ObservableProperty]
@@ -28,7 +28,7 @@ public partial class PatientListViewModel : ViewModelBase
     public event Action<PatientDto>? PatientSelected;
     public event Action? AddPatientRequested;
 
-    public PatientListViewModel(PatientService patientService)
+    public PatientListViewModel(IPatientService patientService)
     {
         _patientService = patientService;
     }

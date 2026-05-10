@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OrthoSpineAI.Application.Services;
+using OrthoSpineAI.Application.Interfaces;
 using OrthoSpineAI.Domain.Entities;
 
 namespace OrthoSpineAI.UI.ViewModels;
 
 public partial class LoginViewModel : ViewModelBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
     [ObservableProperty]
     private string _login = string.Empty;
@@ -23,7 +23,7 @@ public partial class LoginViewModel : ViewModelBase
 
     public event Action<SystemUser>? LoginSucceeded;
 
-    public LoginViewModel(AuthService authService)
+    public LoginViewModel(IAuthService authService)
     {
         _authService = authService;
     }

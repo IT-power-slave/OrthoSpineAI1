@@ -20,6 +20,14 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        DispatcherUnhandledException += (_, args) =>
+        {
+            MessageBox.Show(
+                $"Nieoczekiwany błąd aplikacji:{Environment.NewLine}{args.Exception.Message}",
+                "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;
+        };
+
         var dbPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "OrthoSpineAI", "ortho.db");
@@ -30,16 +38,12 @@ public partial class App : System.Windows.Application
         // Infrastructure — Singleton DbContext is safe for a single-user desktop app
         services.AddInfrastructure(dbPath);
 
-        // Application services — Singleton so ShellViewModel (Singleton) can consume them
-        services.AddSingleton<AuthService>();
-        services.AddSingleton<IAuthService>(sp => sp.GetRequiredService<AuthService>());
-        services.AddSingleton<PatientService>();
-        services.AddSingleton<IPatientService>(sp => sp.GetRequiredService<PatientService>());
-        services.AddSingleton<SurveyService>();
-        services.AddSingleton<ISurveyService>(sp => sp.GetRequiredService<SurveyService>());
+        // Application services
+        services.AddSingleton<IAuthService,    AuthService>();
+        services.AddSingleton<IPatientService, PatientService>();
+        services.AddSingleton<ISurveyService,  SurveyService>();
+        services.AddSingleton<IMedTestService, MedTestService>();
         services.AddSingleton<AwwsEngine>();
-        services.AddSingleton<MedTestService>();
-        services.AddSingleton<IMedTestService>(sp => sp.GetRequiredService<MedTestService>());
 
         // UI services
         services.AddSingleton<IDialogService, WpfDialogService>();

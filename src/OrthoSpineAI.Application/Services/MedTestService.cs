@@ -17,8 +17,6 @@ public class MedTestService : IMedTestService
     {
         _repo = repo;
         _awwsEngine = awwsEngine;
-
-        _repo = repo;
     }
 
     public async Task<MedTestDto> CreateAsync(CreateMedTestDto dto, CancellationToken ct = default)
