@@ -2,6 +2,7 @@ using OrthoSpineAI.Domain.Enums;
 
 namespace OrthoSpineAI.Application.DTOs;
 
+/// <summary>Read-only projection of a patient record returned from the Application layer.</summary>
 public record PatientDto(
     int PatientId,
     string FirstName,
