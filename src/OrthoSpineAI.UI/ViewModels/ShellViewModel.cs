@@ -81,14 +81,11 @@ public partial class ShellViewModel : ViewModelBase
     {
         var result = await _medTestService.GetAwwsResultAsync(medTestId);
         if (result is null) return;
-        var dash = await _medTestService.GetDashboardAsync(0);
-        var row = dash.RecentTests.FirstOrDefault(r => r.MedTestId == medTestId);
-        if (row is null) return;
-        var patients = await _patientService.GetAllAsync();
-        var patient = patients.FirstOrDefault(p => p.PatientId == row.PatientId);
+        var patient = await _patientService.GetByIdAsync(result.PatientId);
         if (patient is null) return;
         NavigateToAwwsResult(result, patient);
     }
+
 
     private void NavigateToPatientList()
     {

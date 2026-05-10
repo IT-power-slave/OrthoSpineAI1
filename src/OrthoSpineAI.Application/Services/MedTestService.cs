@@ -156,6 +156,7 @@ public class MedTestService : IMedTestService
         return dto with
         {
             MedTestId       = medTestId,
+            PatientId       = test.PatientId,
             ExaminationDate = test.ExaminationDate,
             SurveyName      = test.MedTestDefinitionKey
         };
@@ -173,6 +174,7 @@ public class MedTestService : IMedTestService
 
         return new AwwsResultDto(
             medTestId,
+            test.PatientId,
             test.ExaminationDate,
             test.MedTestDefinitionKey,
             entity.PilsVariant,
@@ -182,7 +184,7 @@ public class MedTestService : IMedTestService
             groups);
     }
 
-    private static AwwsResultDto EmptyResult() => new(0, DateTime.UtcNow, string.Empty, 0, 0,
+    private static AwwsResultDto EmptyResult() => new(0, 0, DateTime.UtcNow, string.Empty, 0, 0,
         "Brak danych — test nie został znaleziony.", string.Empty,
         new Dictionary<string, bool>());
 

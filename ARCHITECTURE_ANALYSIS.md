@@ -81,7 +81,7 @@ Each class has a single, well-defined responsibility:
   // SurveySelectionViewModel - Only manages survey selection
   public partial class SurveySelectionViewModel : ViewModelBase
   {
-      private readonly SurveyService _surveyService;
+      private readonly ISurveyService _surveyService;
       // Focused on survey selection logic only
   }
   ```
@@ -89,7 +89,7 @@ Each class has a single, well-defined responsibility:
 - **Services**: Encapsulate business operations per domain concept
   ```csharp
   // PatientService - Only handles patient operations
-  public class PatientService
+  public class PatientService : IPatientService
   {
       public async Task<IReadOnlyList<PatientDto>> GetAllAsync(...)
       public async Task<PatientDto> CreateAsync(...)
@@ -199,14 +199,14 @@ High-level modules depend on abstractions:
 // ViewModels depend on service abstractions
 public partial class SurveySelectionViewModel : ViewModelBase
 {
-    private readonly SurveyService _surveyService;  // Application layer service
-    public SurveySelectionViewModel(SurveyService surveyService, PatientDto patient)
+    private readonly ISurveyService _surveyService;
+    public SurveySelectionViewModel(ISurveyService surveyService, PatientDto patient)
 }
 
 // Services depend on repository interfaces
-public class PatientService
+public class PatientService : IPatientService
 {
-    private readonly IPatientRepository _repo;  // Domain interface
+    private readonly IPatientRepository _repo;
     public PatientService(IPatientRepository repo)
 }
 
@@ -216,11 +216,13 @@ public class PatientRepository : IPatientRepository
 
 **Dependency Injection Configuration**:
 ```csharp
-// Proper DI container setup in App.xaml.cs
+// App.xaml.cs — clean interface → implementation mappings
 services.AddInfrastructure(dbPath);
-services.AddSingleton<AuthService>();
-services.AddSingleton<PatientService>();
-services.AddSingleton<SurveyService>();
+services.AddSingleton<IAuthService, AuthService>();
+services.AddSingleton<IPatientService, PatientService>();
+services.AddSingleton<ISurveyService, SurveyService>();
+services.AddSingleton<IMedTestService, MedTestService>();
+services.AddSingleton<IDialogService, WpfDialogService>();
 ```
 
 ---
@@ -268,7 +270,7 @@ public record PatientDto(
 ```csharp
 public partial class SurveySelectionViewModel : ViewModelBase
 {
-    private readonly SurveyService _surveyService;
+    private readonly ISurveyService _surveyService;
 
     // Source generators for INotifyPropertyChanged
     [ObservableProperty]
@@ -645,24 +647,16 @@ public async Task LoadAsync()
 
 ## 7. Areas for Improvement
 
-### 7.1 Testing ⭐⭐ (MAJOR GAP)
+### 7.1 Testing ⭐⭐⭐⭐ (ADDRESSED)
 
-**Status: MISSING**
+**Status: ADDED — 116 tests, 116 passing**
 
-❌ **No unit test project found**  
-❌ No integration tests  
-❌ No test coverage  
+✅ xUnit test project at `tests/OrthoSpineAI.Tests`  
+✅ NSubstitute for mocking service and repository dependencies  
+✅ Covers all `IPGLogic` algorithm modules, `AwwsEngine`, all Application services, `PeselDecoder`  
+✅ CI runs tests on every push to `main`  
 
-**Impact**: High - Medical application requires extensive testing
-
-**Recommendation**: Add test projects:
-```
-tests/
-├── OrthoSpineAI.Domain.Tests/
-├── OrthoSpineAI.Application.Tests/
-├── OrthoSpineAI.Infrastructure.Tests/
-└── OrthoSpineAI.UI.Tests/
-```
+⚠️ Integration tests (DB) and UI automation tests remain future work.
 
 ### 7.2 Logging
 
@@ -721,27 +715,13 @@ public class PatientDtoValidator : AbstractValidator<PatientDto>
 }
 ```
 
-### 7.4 Error Handling
+### 7.4 Error Handling ⭐⭐⭐⭐ (IMPROVED)
 
-**Status: BASIC**
+**Status: GOOD**
 
-⚠️ Generic exception catching  
-⚠️ No custom exception types  
-⚠️ No global exception handler  
-
-**Recommendation**:
-```csharp
-// Custom exceptions
-public class PatientNotFoundException : Exception
-{
-    public int PatientId { get; }
-    public PatientNotFoundException(int patientId) 
-        : base($"Patient with ID {patientId} not found.")
-    {
-        PatientId = patientId;
-    }
-}
-```
+✅ Global `DispatcherUnhandledException` handler in `App.xaml.cs` prevents silent crashes  
+⚠️ Generic exception catching in services — could use typed exceptions for richer error messages  
+⚠️ No structured logging framework yet
 
 ### 7.5 Configuration Management
 
@@ -791,13 +771,13 @@ public class MockDeviceDriver : IDeviceDriver
 }
 ```
 
-### 7.8 Documentation
+### 7.8 Documentation ⭐⭐⭐⭐ (IMPROVED)
 
-**Status: MINIMAL**
-
-⚠️ XML comments present but incomplete  
-⚠️ No architectural documentation (until now)  
-⚠️ No API documentation  
+✅ `ARCHITECTURE_ANALYSIS.md` — this document  
+✅ `README.md` — setup, feature overview, algorithm summary  
+✅ XML doc comments on all public Application interfaces and DTOs  
+✅ `GenerateDocumentationFile` enabled in Application project  
+⚠️ Infrastructure and Domain layers still lack XML comments
 
 ### 7.9 Security
 
@@ -822,48 +802,18 @@ public class MockDeviceDriver : IDeviceDriver
 
 ### 8.1 Immediate Actions (High Priority)
 
-1. **Add Unit Tests** 🔴
-   - Create test projects for all layers
-   - Target 80%+ code coverage
-   - Focus on business logic and algorithms
-   - Test ViewModels thoroughly
-
-2. **Implement Logging** 🟡
-   - Add Serilog or Microsoft.Extensions.Logging
-   - Log all critical operations
-   - Implement audit trail for medical data
-
-3. **Add Validation** 🟡
-   - Implement FluentValidation
-   - Add ViewModel validation
-   - Provide user feedback
-
-4. **Security Review** 🔴 (Medical App)
-   - Review authentication/authorization
-   - Ensure password hashing
-   - Implement data encryption for sensitive fields
-   - Document compliance measures
+1. **Unit Tests** ✅ Done — 116 tests, 116 passing
+2. **CI Pipeline** ✅ Done — GitHub Actions on every push/PR
+3. **Documentation** ✅ Done — README, architecture doc, XML comments
+4. **Implement Logging** 🟡 Recommended — add `Microsoft.Extensions.Logging`; especially important for a medical audit trail
+5. **Security Review** 🔴 Medical App — BCrypt in use ✅; consider field-level encryption for PESEL/birthdate
 
 ### 8.2 Short-term Improvements
 
-5. **Navigation Service**
-   - Extract navigation to dedicated service
-   - Improve testability
-
-6. **Error Handling**
-   - Create custom exception types
-   - Implement global exception handler
-   - User-friendly error messages
-
-7. **Configuration Management**
-   - Add appsettings.json
-   - Environment-based configuration
-   - Connection string management
-
-8. **Documentation**
-   - Complete XML comments
-   - Add README with setup instructions
-   - Document API contracts
+6. **Navigation Service** — extract to a dedicated interface for better testability
+7. **Custom Exception Types** — domain-specific exceptions with meaningful messages
+8. **Configuration Management** — add `appsettings.json`; remove hardcoded DB path
+9. **Input Validation** — PESEL format, field length feedback in Add/Edit Patient forms
 
 ### 8.3 Long-term Enhancements
 
@@ -901,19 +851,24 @@ public class MockDeviceDriver : IDeviceDriver
 ✅ **Modern C# practices**  
 ✅ **Clean, maintainable code**  
 
-### Critical Gap
+### Resolved Gaps
 
-❌ **Testing**: The only major deficiency is the absence of automated tests, which is critical for a medical application.
+✅ **Testing** — 116 unit tests covering all algorithm modules and Application services  
+✅ **CI** — automated build, test, and coverage on every push  
+✅ **Documentation** — README, XML comments, architecture analysis  
+✅ **Dialog abstraction** — `IDialogService` removes WPF coupling from ViewModels  
+✅ **Global error handler** — desktop crashes are caught and shown to the user  
+
+### Remaining Gaps
+
+- **Logging / audit trail** — essential for a medical application  
+- **Input validation feedback** — PESEL format, field length errors in forms  
+- **Custom domain exceptions** — richer error semantics  
+- **Configuration management** — remove hardcoded paths  
 
 ### Final Recommendation
 
-**This is a well-architected application that follows industry best practices.** The code demonstrates professional software development standards. The primary focus should be on:
-
-1. **Adding comprehensive test coverage** (highest priority)
-2. **Implementing logging and auditing** (medical compliance)
-3. **Enhancing validation and error handling**
-
-Once these gaps are addressed, this would be a **5-star exemplary application**.
+**This is now a well-architected, tested, and documented application.** The rating has improved to **⭐⭐⭐⭐½** with the remaining gap being structured logging and deeper validation.
 
 ---
 
@@ -924,19 +879,22 @@ Once these gaps are addressed, this would be a **5-star exemplary application**.
 | Clean Architecture | ✅ Excellent | 4-layer separation |
 | SOLID Principles | ✅ Excellent | All 5 principles implemented |
 | MVVM Pattern | ✅ Excellent | Textbook implementation |
-| Dependency Injection | ✅ Excellent | Proper DI container usage |
+| Dependency Injection | ✅ Excellent | All ViewModels use service interfaces |
 | Repository Pattern | ✅ Excellent | Clean abstraction |
-| DTOs | ✅ Excellent | Records used appropriately |
+| DTOs | ✅ Excellent | Records with XML doc comments |
 | Async/Await | ✅ Excellent | Proper async throughout |
 | Modern C# | ✅ Excellent | C# 10+ features |
 | EF Core | ✅ Excellent | Migrations, fluent config |
-| **Unit Tests** | ✅ Added | 62 tests, 62 passing (xUnit + NSubstitute) |
+| **Unit Tests** | ✅ Added | **116 tests, 116 passing** |
+| **CI Pipeline** | ✅ Added | GitHub Actions — build + test + coverage |
+| **XML Documentation** | ✅ Added | All public Application interfaces and DTOs |
+| **Global Error Handler** | ✅ Added | `DispatcherUnhandledException` in App.xaml.cs |
+| **Dialog Abstraction** | ✅ Added | `IDialogService` — MVVM-pure ViewModels |
 | Integration Tests | ❌ Missing | Recommended |
 | Logging | ⚠️ Minimal | Needs improvement |
-| Validation | ⚠️ Minimal | Needs improvement |
-| Error Handling | ⚠️ Basic | Could be enhanced |
+| Validation | ⚠️ Minimal | Form-level PESEL/field feedback missing |
+| Custom Exceptions | ⚠️ Basic | Could be enhanced |
 | Configuration | ⚠️ Basic | Could use appsettings.json |
-| Documentation | ⚠️ Partial | XML comments incomplete |
 | Security | ⚠️ Review Needed | Medical app requirement |
 
 ---
@@ -995,5 +953,32 @@ Created `tests/OrthoSpineAI.Tests` (xUnit, NSubstitute, net10.0):
 | `PatientServiceTests` | CRUD mapping and search via mocked `IPatientRepository` |
 | `AuthServiceTests` | Valid credentials, wrong password, unknown login, empty password |
 
-**Total: 104 tests, 104 passing.**
+**Total: 116 tests, 116 passing.**
 
+### B.5 All ViewModels Refactored to Service Interfaces
+
+All UI ViewModels now depend on `IAuthService`, `IPatientService`, `ISurveyService`, `IMedTestService`, and `IDialogService` rather than concrete classes, completing DIP compliance at the UI layer.
+
+### B.6 Bug Fix — `ShellViewModel` Dashboard Navigation
+
+`NavigateToHistoricResultFromDashboardAsync` previously loaded all patients to find one by ID. Fixed to:
+1. Add `PatientId` to `AwwsResultDto` (populated in `FinishTestAsync` and `GetAwwsResultAsync`)
+2. Call `IPatientService.GetByIdAsync(result.PatientId)` directly — O(1) instead of O(n)
+
+### B.7 CI Pipeline
+
+Added `.github/workflows/ci.yml` — GitHub Actions triggers on every push and pull request to `main`: restore → build Release → test with coverlet code coverage artifact.
+
+### B.8 XML Documentation
+
+`GenerateDocumentationFile` enabled in Application project. Full `<summary>` / `<param>` comments added to all five Application interfaces and all public DTOs.
+
+### B.9 README
+
+Added `README.md` with feature overview, solution structure, getting-started instructions, architecture decision table, CI section, and algorithm module reference.
+
+---
+
+**Document Version:** 1.2  
+**Last Updated:** 2026-05-12  
+**Reviewed By:** GitHub Copilot (AI Code Analysis)

@@ -68,6 +68,7 @@ public sealed class AwwsEngine
 
         return new AwwsResultDto(
             MedTestId: 0,
+            PatientId: 0,
             ExaminationDate: DateTime.UtcNow,
             SurveyName: string.Empty,
             PilsVariant: variant,
