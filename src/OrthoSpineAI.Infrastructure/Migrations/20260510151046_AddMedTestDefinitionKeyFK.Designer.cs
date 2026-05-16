@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OrthoSpineAI.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using OrthoSpineAI.Infrastructure.Persistence;
 namespace OrthoSpineAI.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260510151046_AddMedTestDefinitionKeyFK")]
+    partial class AddMedTestDefinitionKeyFK
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
@@ -99,9 +102,6 @@ namespace OrthoSpineAI.Infrastructure.Migrations
 
                     b.Property<double>("Growth")
                         .HasColumnType("REAL");
-
-                    b.Property<int>("Hs")
-                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("KneeValgus")
                         .HasColumnType("INTEGER");
@@ -292,9 +292,6 @@ namespace OrthoSpineAI.Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Plane")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Tip")

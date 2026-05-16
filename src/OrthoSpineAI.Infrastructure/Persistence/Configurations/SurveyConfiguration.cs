@@ -22,6 +22,7 @@ public class MedTestStageConfiguration : IEntityTypeConfiguration<MedTestStage>
     {
         b.ToTable("MedTestStages");
         b.HasKey(s => s.MedTestStageId);
+        b.Property(s => s.SortOrder);
         b.Property(s => s.Name).IsRequired().HasMaxLength(200);
         b.Property(s => s.Tip).HasMaxLength(2000);
         b.Property(s => s.TipControl).HasMaxLength(100);

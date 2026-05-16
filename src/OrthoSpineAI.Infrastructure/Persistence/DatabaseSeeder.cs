@@ -236,6 +236,8 @@ public static class DatabaseSeeder
         Stage(w, "Odchylenie promieniowe",ORT100Mode.MODE_MANUAL, ORT100ResetFlag.NONE,               ORT100Button.BTN_SAMPLE, ORT100Measurement.MEAS_ABDUCTION, MedTestPlane.FRONTAL_PLANE);
         Stage(w, "Odchylenie łokciowe — reset", ORT100Mode.MODE_MANUAL, ORT100ResetFlag.NONE,        ORT100Button.BTN_RESET,  ORT100Measurement.MEAS_ABDUCTION, MedTestPlane.FRONTAL_PLANE);
         Stage(w, "Odchylenie łokciowe",   ORT100Mode.MODE_MANUAL, ORT100ResetFlag.NONE,               ORT100Button.BTN_SAMPLE, ORT100Measurement.MEAS_ADDUCTION, MedTestPlane.FRONTAL_PLANE);
+        Def(db, "wrist.left",    "Lewy nadgarstek");
+        Def(db, "wrist.right",   "Prawy nadgarstek");
         Def(db, "wrist.summary", "Podsumowanie nadgarstka");
         await db.SaveChangesAsync();
     }
@@ -277,6 +279,7 @@ public static class DatabaseSeeder
     {
         def.Stages.Add(new MedTestStage
         {
+            SortOrder = def.Stages.Count + 1,
             Name = name, Tip = tip, OrtMode = mode,
             OrtResetFlag = reset, OrtNextStepButton = button,
             OrtMeas = meas, Plane = plane,
@@ -295,6 +298,7 @@ public static class DatabaseSeeder
     {
         def.Stages.Add(new MedTestStage
         {
+            SortOrder = def.Stages.Count + 1,
             Name = name, Tip = tip, OrtMode = mode,
             OrtResetFlag = reset, OrtNextStepButton = button,
             OrtMeas = meas, Plane = plane,

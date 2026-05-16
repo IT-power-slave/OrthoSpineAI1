@@ -13,6 +13,11 @@ public class MedTestConfiguration : IEntityTypeConfiguration<MedTest>
         b.Property(t => t.ExaminationDate).IsRequired();
         b.Property(t => t.Description).HasMaxLength(1000);
         b.Property(t => t.MedTestDefinitionKey).IsRequired().HasMaxLength(100);
+        b.HasOne(t => t.MedTestDefinition)
+            .WithMany()
+            .HasForeignKey(t => t.MedTestDefinitionKey)
+            .HasPrincipalKey(d => d.Key)
+            .OnDelete(DeleteBehavior.Restrict);
         b.HasOne(t => t.Patient)
             .WithMany(p => p.MedTests)
             .HasForeignKey(t => t.PatientId)
