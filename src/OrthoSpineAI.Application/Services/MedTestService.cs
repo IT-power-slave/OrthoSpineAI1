@@ -6,6 +6,7 @@ using OrthoSpineAI.Domain.Entities;
 using OrthoSpineAI.Domain.Enums;
 using OrthoSpineAI.Domain.Exceptions;
 using OrthoSpineAI.Domain.Interfaces;
+using OrthoSpineAI.Domain.Reports;
 using System.Text.Json;
 
 namespace OrthoSpineAI.Application.Services;
@@ -33,6 +34,7 @@ public class MedTestService : IMedTestService
             Weight = dto.Weight,
             Growth = dto.Growth,
             Beighton = dto.Beighton,
+            Hs = dto.Hs,
             TestPP = dto.TestPP,
             KneeValgus = dto.KneeValgus,
             TarsalValgus = dto.TarsalValgus,
@@ -108,13 +110,14 @@ public class MedTestService : IMedTestService
 
         // Scalar fields from MedTest
         p[AwwsParams.BEIGHTON]        = test.Beighton;
+        p[AwwsParams.HS]              = test.Hs;
         p[AwwsParams.WEIGHT]          = (int)Math.Round(test.Weight);
         p[AwwsParams.HEIGHT]          = (int)Math.Round(test.Growth);
         p[AwwsParams.AGE]             = patientAgeYears;
 
-        // Leg statics derived from examination flags
-        p[AwwsParams.LEGSSTAT_DISTURBED] = test.KneeValgus || test.TarsalValgus || test.TestPP;
-        p[AwwsParams.LEGSSTAT_CORRECT]   = !test.KneeValgus && !test.TarsalValgus && !test.TestPP;
+        // Leg statics — driven by knee/tarsal valgus only (docs §4 PGLogicLegsStatics)
+        p[AwwsParams.LEGSSTAT_DISTURBED] = test.KneeValgus || test.TarsalValgus;
+        p[AwwsParams.LEGSSTAT_CORRECT]   = !test.KneeValgus && !test.TarsalValgus;
 
         // Map saved measurements
         var results = test.Results;
@@ -127,24 +130,29 @@ public class MedTestService : IMedTestService
         p[AwwsParams.THK] = (int)Math.Round(Meas(ORT100Measurement.MEAS_KP));
         p[AwwsParams.PT]  = (int)Math.Round(Meas(ORT100Measurement.MEAS_NM));
 
-        // ATR: max of Adams test measurements (AC7..ASIPS)
-        var atrValues = new[]
+        // ATR_max: computed from continuous Roll readings during Adams test (gap #5)
+        // per docs: ATR_max = max(|Roll|) over continuous frames for AC7, AT6, AT12, AL3, ASIPS
+        var adamsOrtMeas = new[]
         {
-            Meas(ORT100Measurement.MEAS_AC7),
-            Meas(ORT100Measurement.MEAS_AT6),
-            Meas(ORT100Measurement.MEAS_AT12),
-            Meas(ORT100Measurement.MEAS_AL3),
-            Meas(ORT100Measurement.MEAS_ASIPS)
+            ORT100Measurement.MEAS_AC7,
+            ORT100Measurement.MEAS_AT6,
+            ORT100Measurement.MEAS_AT12,
+            ORT100Measurement.MEAS_AL3,
+            ORT100Measurement.MEAS_ASIPS
         };
-        int atrMax = (int)Math.Round(atrValues.Max());
+        var continuousRolls = test.ContinuousResults
+            .Where(r => adamsOrtMeas.Contains(r.OrtMeas))
+            .Select(r => Math.Abs(r.Roll))
+            .ToList();
+        int atrMax = continuousRolls.Count > 0
+            ? (int)Math.Round(continuousRolls.Max())
+            : 0;
         p[AwwsParams.ATR] = atrMax;
-        p[AwwsParams.HS]  = atrMax; // HS ≈ ATR for simplified scoring
 
-        // FLLD: derived from pelvic inclination (NM) and leg statics
-        double nm = Meas(ORT100Measurement.MEAS_NM);
-        p[AwwsParams.FLLD_POSITIVE] = nm > 5;
-        p[AwwsParams.FLLD_NEGATIVE] = nm < -5;
-        p[AwwsParams.FLLD_NEUTRAL]  = Math.Abs(nm) <= 5;
+        // FLLD: functional leg-length discrepancy — driven by TestPP flag (docs §4 PGLogicFLLD)
+        p[AwwsParams.FLLD_POSITIVE] = test.TestPP;
+        p[AwwsParams.FLLD_NEGATIVE] = !test.TestPP;
+        p[AwwsParams.FLLD_NEUTRAL]  = false;
 
         var engine = _awwsEngine;
         var dto = engine.Evaluate(p);
@@ -222,6 +230,109 @@ public class MedTestService : IMedTestService
     private static MedTestDto MapToDto(MedTest t) => new(
         t.MedTestId, t.ExaminationDate, t.Description,
         t.MedTestDefinitionKey, t.Weight, t.Growth,
-        t.Beighton, t.TestPP, t.KneeValgus, t.TarsalValgus,
+        t.Beighton, t.Hs, t.TestPP, t.KneeValgus, t.TarsalValgus,
         t.GaitDisturbance, t.PatientId, t.SystemUserId);
+
+    /// <summary>
+    /// Builds the <see cref="DiagnosticForm"/> aggregate from the persisted MedTest and its
+    /// stored AwwsResult, grouping AWWS parameters into labelled <see cref="IParametersGroup"/>
+    /// instances that match the PG-Logic structure described in Appendix E of the docs.
+    /// </summary>
+    public async Task<DiagnosticForm?> BuildDiagnosticFormAsync(
+        int medTestId, int patientAgeYears, CancellationToken ct = default)
+    {
+        var test = await _repo.GetByIdAsync(medTestId, ct);
+        var awws = await _repo.GetAwwsResultAsync(medTestId, ct);
+        if (test is null || awws is null) return null;
+
+        var groups = JsonSerializer.Deserialize<Dictionary<string, bool>>(awws.GroupResultsJson)
+                     ?? [];
+
+        bool GroupActive(string name) => groups.TryGetValue(name, out var v) && v;
+
+        string YesNo(bool v) => v ? "Tak" : "Nie";
+
+        double Meas(ORT100Measurement key) =>
+            test.Results.FirstOrDefault(r => r.OrtMeas == key)?.PhysicalValue ?? 0.0;
+
+        var adamsOrtMeas = new[]
+        {
+            ORT100Measurement.MEAS_AC7, ORT100Measurement.MEAS_AT6,
+            ORT100Measurement.MEAS_AT12, ORT100Measurement.MEAS_AL3,
+            ORT100Measurement.MEAS_ASIPS
+        };
+        int atrMax = test.ContinuousResults
+            .Where(r => adamsOrtMeas.Contains(r.OrtMeas))
+            .Select(r => (int)Math.Round(Math.Abs(r.Roll)))
+            .DefaultIfEmpty(0).Max();
+
+        var paramGroups = new List<IParametersGroup>
+        {
+            new ParametersGroup("PGLogicAnthropometric", "Dane antropometryczne",
+                GroupActive("PGLogicAnthropometric"),
+                [
+                    new ParameterEntry("AGE",    "Wiek",    $"{patientAgeYears} lat"),
+                    new ParameterEntry("HEIGHT", "Wzrost",  $"{(int)Math.Round(test.Growth)} cm"),
+                    new ParameterEntry("WEIGHT", "Masa",    $"{(int)Math.Round(test.Weight)} kg"),
+                ]),
+
+            new ParametersGroup("PGLogicAtr", "ATR / Wynik Huntera (AWWS)",
+                GroupActive("PGLogicAtr"),
+                [
+                    new ParameterEntry("ATR", "ATR_max (Kąt rotacji tułowia)", $"{atrMax}°"),
+                    new ParameterEntry("HS",  "HS (Wynik Huntera)",            $"{test.Hs}"),
+                ]),
+
+            new ParametersGroup("PGLogicBeightonScaleNumeric", "Skala Beightona",
+                GroupActive("PGLogicBeightonScaleNumeric"),
+                [
+                    new ParameterEntry("BEIGHTON", "Wynik Beightona", $"{test.Beighton} pkt"),
+                ]),
+
+            new ParametersGroup("PGLogicFLLD", "FLLD – różnica długości kończyn",
+                GroupActive("PGLogicFLLD"),
+                [
+                    new ParameterEntry("FLLD_POSITIVE", "FLLD dodatnie (TestPP)", YesNo(test.TestPP)),
+                    new ParameterEntry("FLLD_NEGATIVE", "FLLD ujemne",            YesNo(!test.TestPP)),
+                ]),
+
+            new ParametersGroup("PGLogicLegsStatics", "Statyka kończyn dolnych",
+                GroupActive("PGLogicLegsStatics"),
+                [
+                    new ParameterEntry("LEGSSTAT_DISTURBED", "Zaburzenia statyki", YesNo(test.KneeValgus || test.TarsalValgus)),
+                    new ParameterEntry("KneeValgus",         "Koślawość kolan",   YesNo(test.KneeValgus)),
+                    new ParameterEntry("TarsalValgus",       "Koślawość stępu",   YesNo(test.TarsalValgus)),
+                ]),
+
+            new ParametersGroup("PGLogicLLTHK", "Krzywizny strzałkowe kręgosłupa",
+                GroupActive("PGLogicLLTHK"),
+                [
+                    new ParameterEntry("LL",  "Lordoza lędźwiowa (LL)",  $"{(int)Math.Round(Meas(ORT100Measurement.MEAS_LL))}°"),
+                    new ParameterEntry("THK", "Kifoza piersiowa (THK)",  $"{(int)Math.Round(Meas(ORT100Measurement.MEAS_KP))}°"),
+                ]),
+
+            new ParametersGroup("PGLogicPT", "Nachylenie miednicy",
+                GroupActive("PGLogicPT"),
+                [
+                    new ParameterEntry("PT", "PT – nachylenie miednicy (NM)", $"{(int)Math.Round(Meas(ORT100Measurement.MEAS_NM))}°"),
+                ]),
+        };
+
+        return new DiagnosticForm
+        {
+            MedTestId             = test.MedTestId,
+            PatientId             = test.PatientId,
+            ExaminationDate       = test.ExaminationDate,
+            SurveyName            = test.MedTestDefinitionKey,
+            PatientNotes          = test.Description,
+            Weight                = test.Weight,
+            Height                = test.Growth,
+            AgeYears              = patientAgeYears,
+            PilsVariant           = awws.PilsVariant,
+            PilsControlKey        = awws.PilsControlKey,
+            Conclusion            = awws.Conclusion,
+            ControlRecommendation = awws.ControlRecommendation,
+            ParametersGroups      = paramGroups,
+        };
+    }
 }

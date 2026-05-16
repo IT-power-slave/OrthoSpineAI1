@@ -1,4 +1,5 @@
 using OrthoSpineAI.Application.DTOs;
+using OrthoSpineAI.Domain.Reports;
 
 namespace OrthoSpineAI.Application.Interfaces;
 
@@ -37,4 +38,11 @@ public interface IMedTestService
     /// number of patients already loaded by the caller.
     /// </summary>
     Task<DashboardDto> GetDashboardAsync(int patientCount, CancellationToken ct = default);
+
+    /// <summary>
+    /// Builds the in-memory <see cref="DiagnosticForm"/> aggregate for a completed examination
+    /// by combining persisted <c>MedTest</c> measurements with the stored AWWS result.
+    /// Returns <see langword="null"/> when the examination or its AWWS result cannot be found.
+    /// </summary>
+    Task<DiagnosticForm?> BuildDiagnosticFormAsync(int medTestId, int patientAgeYears, CancellationToken ct = default);
 }

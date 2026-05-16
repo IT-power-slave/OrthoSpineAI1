@@ -38,7 +38,7 @@ public class SurveyService : ISurveyService
         d.MedTestDefinitionId,
         d.Key,
         d.Name,
-        d.Stages.OrderBy(s => s.MedTestStageId).Select(MapStage).ToList());
+        d.Stages.OrderBy(s => s.SortOrder).Select(MapStage).ToList());
 
     private static StageDto MapStage(MedTestStage s) => new(
         s.MedTestStageId, s.Name, s.Tip, s.TipControl, s.MainSurveyControl,
