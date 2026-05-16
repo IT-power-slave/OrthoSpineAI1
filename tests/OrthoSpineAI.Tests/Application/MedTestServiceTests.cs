@@ -140,4 +140,232 @@ public class MedTestServiceTests
         Assert.Equal(15, result.TestsThisMonth);
         Assert.Empty(result.RecentTests);
     }
+
+    // ── Gap #7: FLLD / LegsStatics mapping ────────────────────────────────
+
+    private MedTest MakeTest(bool testPP, bool kneeValgus, bool tarsalValgus) => new()
+    {
+        MedTestId = 10,
+        PatientId = 1,
+        MedTestDefinitionKey = "backbone",
+        ExaminationDate = DateTime.UtcNow,
+        Weight = 50, Growth = 160, Beighton = 0,
+        TestPP = testPP, KneeValgus = kneeValgus, TarsalValgus = tarsalValgus,
+        Results = [], ContinuousResults = []
+    };
+
+    [Fact]
+    public async Task FinishTestAsync_TestPPTrue_FlldPositiveAndNegativeFalse()
+    {
+        // TestPP=true → FLLD_POSITIVE, regardless of KneeValgus/TarsalValgus
+        var test = MakeTest(testPP: true, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+
+        var result = await _service.FinishTestAsync(10, 12);
+
+        // FLLD_POSITIVE drives StaticsDisordersOfTheLowerLimbs → test should complete without error
+        Assert.NotNull(result.Conclusion);
+        await _repo.Received(1).SaveAwwsResultAsync(Arg.Any<AwwsResult>(), default);
+    }
+
+    [Fact]
+    public async Task FinishTestAsync_TestPPFalse_FlldNegative()
+    {
+        // TestPP=false → FLLD_NEGATIVE, no statics disorder from FLLD
+        var test = MakeTest(testPP: false, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+
+        var result = await _service.FinishTestAsync(10, 12);
+
+        Assert.NotNull(result.Conclusion);
+    }
+
+    [Fact]
+    public async Task FinishTestAsync_KneeValgusTrue_LegsStatDisturbed_NotAffectedByTestPP()
+    {
+        // KneeValgus=true, TestPP=false → LEGSSTAT_DISTURBED=true (TestPP must NOT influence this)
+        var test = MakeTest(testPP: false, kneeValgus: true, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+
+        var result = await _service.FinishTestAsync(10, 12);
+
+        Assert.NotNull(result.Conclusion);
+        await _repo.Received(1).SaveAwwsResultAsync(Arg.Any<AwwsResult>(), default);
+    }
+
+    [Fact]
+    public async Task FinishTestAsync_NoValgus_LegsStatCorrect_EvenIfTestPPTrue()
+    {
+        // TestPP=true, KneeValgus=false, TarsalValgus=false → LEGSSTAT_CORRECT=true
+        var test = MakeTest(testPP: true, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+
+        var result = await _service.FinishTestAsync(10, 12);
+
+        // Should not throw and should produce a valid result
+        Assert.NotNull(result.Conclusion);
+    }
+
+    // ── Gap #19: BuildDiagnosticFormAsync ─────────────────────────────────
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_ReturnsNull_WhenTestNotFound()
+    {
+        _repo.GetByIdAsync(999, default).Returns((MedTest?)null);
+        _repo.GetAwwsResultAsync(999, default).Returns((AwwsResult?)null);
+
+        var form = await _service.BuildDiagnosticFormAsync(999, 12);
+
+        Assert.Null(form);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_ReturnsNull_WhenAwwsResultNotFound()
+    {
+        var test = MakeTest(testPP: false, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns((AwwsResult?)null);
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 12);
+
+        Assert.Null(form);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_PopulatesSessionMetadata()
+    {
+        var test = MakeTest(testPP: false, kneeValgus: false, tarsalValgus: false);
+        test.Description = "notatka testowa";
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns(MakeAwwsResult(pilsVariant: 2, controlKey: 3));
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 14);
+
+        Assert.NotNull(form);
+        Assert.Equal(10, form.MedTestId);
+        Assert.Equal(1, form.PatientId);
+        Assert.Equal("backbone", form.SurveyName);
+        Assert.Equal("notatka testowa", form.PatientNotes);
+        Assert.Equal(14, form.AgeYears);
+        Assert.Equal(50.0, form.Weight);
+        Assert.Equal(160.0, form.Height);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_PopulatesAwwsOutcome()
+    {
+        var test = MakeTest(testPP: false, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns(MakeAwwsResult(pilsVariant: 3, controlKey: 2,
+            conclusion: "Wniosek testowy", recommendation: "Zalecenie testowe"));
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 10);
+
+        Assert.Equal(3, form!.PilsVariant);
+        Assert.Equal(2, form.PilsControlKey);
+        Assert.Equal("Wniosek testowy", form.Conclusion);
+        Assert.Equal("Zalecenie testowe", form.ControlRecommendation);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_ContainsAllSevenParameterGroups()
+    {
+        var test = MakeTest(testPP: true, kneeValgus: true, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns(MakeAwwsResult());
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 12);
+
+        Assert.NotNull(form);
+        Assert.Equal(7, form.ParametersGroups.Count);
+        var groupNames = form.ParametersGroups.Select(g => g.GroupName).ToList();
+        Assert.Contains("PGLogicAnthropometric", groupNames);
+        Assert.Contains("PGLogicAtr", groupNames);
+        Assert.Contains("PGLogicBeightonScaleNumeric", groupNames);
+        Assert.Contains("PGLogicFLLD", groupNames);
+        Assert.Contains("PGLogicLegsStatics", groupNames);
+        Assert.Contains("PGLogicLLTHK", groupNames);
+        Assert.Contains("PGLogicPT", groupNames);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_AnthropometricGroup_ContainsAgeHeightWeight()
+    {
+        var test = MakeTest(testPP: false, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns(MakeAwwsResult());
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 15);
+
+        var anthro = form!.ParametersGroups.Single(g => g.GroupName == "PGLogicAnthropometric");
+        var keys = anthro.Parameters.Select(p => p.Key).ToList();
+        Assert.Contains("AGE", keys);
+        Assert.Contains("HEIGHT", keys);
+        Assert.Contains("WEIGHT", keys);
+        Assert.Equal("15 lat", anthro.Parameters.Single(p => p.Key == "AGE").Value);
+        Assert.Equal("160 cm", anthro.Parameters.Single(p => p.Key == "HEIGHT").Value);
+        Assert.Equal("50 kg",  anthro.Parameters.Single(p => p.Key == "WEIGHT").Value);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_FlldGroup_ReflectsTestPP()
+    {
+        var test = MakeTest(testPP: true, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns(MakeAwwsResult());
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 10);
+
+        var flld = form!.ParametersGroups.Single(g => g.GroupName == "PGLogicFLLD");
+        Assert.Equal("Tak", flld.Parameters.Single(p => p.Key == "FLLD_POSITIVE").Value);
+        Assert.Equal("Nie", flld.Parameters.Single(p => p.Key == "FLLD_NEGATIVE").Value);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_LegsStaticsGroup_ReflectsValgus()
+    {
+        var test = MakeTest(testPP: false, kneeValgus: true, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        _repo.GetAwwsResultAsync(10, default).Returns(MakeAwwsResult());
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 10);
+
+        var legs = form!.ParametersGroups.Single(g => g.GroupName == "PGLogicLegsStatics");
+        Assert.Equal("Tak", legs.Parameters.Single(p => p.Key == "LEGSSTAT_DISTURBED").Value);
+        Assert.Equal("Tak", legs.Parameters.Single(p => p.Key == "KneeValgus").Value);
+        Assert.Equal("Nie", legs.Parameters.Single(p => p.Key == "TarsalValgus").Value);
+    }
+
+    [Fact]
+    public async Task BuildDiagnosticFormAsync_GroupActiveState_MatchesStoredGroupResults()
+    {
+        var test = MakeTest(testPP: false, kneeValgus: false, tarsalValgus: false);
+        _repo.GetByIdAsync(10, default).Returns(test);
+        // PGLogicFLLD active, PGLogicAtr not active
+        var awws = MakeAwwsResult();
+        awws.GroupResultsJson = System.Text.Json.JsonSerializer.Serialize(
+            new Dictionary<string, bool>
+            {
+                ["PGLogicFLLD"] = true,
+                ["PGLogicAtr"]  = false,
+            });
+        _repo.GetAwwsResultAsync(10, default).Returns(awws);
+
+        var form = await _service.BuildDiagnosticFormAsync(10, 10);
+
+        Assert.True(form!.ParametersGroups.Single(g => g.GroupName == "PGLogicFLLD").IsActive);
+        Assert.False(form.ParametersGroups.Single(g => g.GroupName == "PGLogicAtr").IsActive);
+    }
+
+    private static AwwsResult MakeAwwsResult(
+        int pilsVariant = 1, int controlKey = 0,
+        string conclusion = "Wynik OK", string recommendation = "Brak") => new()
+    {
+        MedTestId             = 10,
+        PilsVariant           = pilsVariant,
+        PilsControlKey        = controlKey,
+        Conclusion            = conclusion,
+        ControlRecommendation = recommendation,
+        GroupResultsJson      = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, bool>()),
+    };
 }
