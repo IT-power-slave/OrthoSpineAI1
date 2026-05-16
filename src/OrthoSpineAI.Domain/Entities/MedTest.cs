@@ -6,8 +6,10 @@ public class MedTest
     public DateTime ExaminationDate { get; set; }
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>Soft FK to MedTestDefinition.Key (e.g. "backbone").</summary>
+    /// <summary>FK to MedTestDefinition.Key (e.g. "backbone").</summary>
     public string MedTestDefinitionKey { get; set; } = string.Empty;
+
+    public MedTestDefinition? MedTestDefinition { get; set; }
 
     public double Weight { get; set; }
 
@@ -15,6 +17,10 @@ public class MedTest
     public double Growth { get; set; }
 
     public int Beighton { get; set; }
+
+    /// <summary>Hump Score (0–20) — back asymmetry measured with a point grid (AWWS §2).</summary>
+    public int Hs { get; set; }
+
     public bool TestPP { get; set; }
     public bool KneeValgus { get; set; }
     public bool TarsalValgus { get; set; }

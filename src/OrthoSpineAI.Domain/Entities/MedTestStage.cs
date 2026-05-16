@@ -4,11 +4,11 @@ namespace OrthoSpineAI.Domain.Entities;
 
 /// <summary>
 /// One step inside a survey template. All fields drive hardware configuration and UI rendering.
-/// Ordering is determined by MedTestStageId (insertion order) — no separate SortOrder column.
 /// </summary>
 public class MedTestStage
 {
     public int MedTestStageId { get; set; }
+    public int SortOrder { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Tip { get; set; } = string.Empty;
     public string TipControl { get; set; } = string.Empty;
