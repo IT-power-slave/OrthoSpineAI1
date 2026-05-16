@@ -42,6 +42,15 @@
                     <Run Text="{Binding Beighton, Mode=OneWay}" FontWeight="Bold"/>
                 </TextBlock>
 
+                <!-- Hump Score -->
+                <TextBlock Text="Hump Score — HS (0–20)" FontSize="12" Foreground="#424242" Margin="0,0,0,4"/>
+                <Slider Minimum="0" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                        Value="{Binding Hs}" Margin="0,0,0,4"/>
+                <TextBlock FontSize="13" Foreground="#1565C0" Margin="0,0,0,12">
+                    <Run Text="Wartość: "/>
+                    <Run Text="{Binding Hs, Mode=OneWay}" FontWeight="Bold"/>
+                </TextBlock>
+
                 <!-- BMI Card -->
                 <Border Background="#E3F2FD" CornerRadius="6" Padding="12,8" Margin="0,0,0,16">
                     <Grid>
@@ -75,6 +84,14 @@
                           IsChecked="{Binding TarsalValgus}" Margin="0,0,0,6" FontSize="13"/>
                 <CheckBox Content="Zaburzenia chodu (Gait Disturbance)"
                           IsChecked="{Binding GaitDisturbance}" Margin="0,0,0,16" FontSize="13"/>
+
+                <!-- Notes -->
+                <TextBlock Text="Notatki kliniczne (opcjonalne)" FontSize="12" Foreground="#757575"
+                           Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True" TextWrapping="Wrap" Height="64"
+                         Padding="6" FontSize="13" VerticalScrollBarVisibility="Auto"
+                         Margin="0,0,0,16"/>
 
                 <!-- Validation -->
                 <TextBlock Text="{Binding ValidationMessage}" Foreground="#C62828"

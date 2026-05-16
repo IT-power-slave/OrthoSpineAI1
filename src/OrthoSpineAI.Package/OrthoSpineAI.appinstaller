@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  OrthoSpineAI.appinstaller
+  ─────────────────────────
+  Deploy this file alongside OrthoSpineAI.msix to your web server / file share.
+  Users install once by double-clicking this file; Windows checks for updates
+  automatically on every launch (or per the policy below).
+
+  MUST keep Uri/@Version in sync with PackageVersion in .wapproj and
+  <Version> in OrthoSpineAI.UI.csproj.
+
+  Hosting checklist:
+    1. Upload OrthoSpineAI.msix to  <Uri> path
+    2. Upload this .appinstaller to  <Uri> root
+    3. Serve both with MIME type  application/msix  (msix)
+       and  application/appinstaller  (.appinstaller)
+-->
+<AppInstaller
+  xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
+  Version="1.0.0.0"
+  Uri="https://your-server.example.com/releases/OrthoSpineAI.appinstaller">
+
+  <MainPackage
+    Name="OrthoSpineAI"
+    Version="1.0.0.0"
+    Publisher="CN=OrthoSpineAI"
+    ProcessorArchitecture="x64"
+    Uri="https://your-server.example.com/releases/OrthoSpineAI.msix" />
+
+  <UpdateSettings>
+    <!-- Check on every application launch -->
+    <OnLaunch
+      HoursBetweenUpdateChecks="0"
+      ShowPrompt="true"
+      UpdateBlocksActivation="false" />
+    <!-- Also allow background checks (Windows 10 1809+) -->
+    <AutomaticBackgroundTask />
+    <!-- Force update when a newer version is available (Windows 10 1903+) -->
+    <ForceUpdateFromAnyVersion>true</ForceUpdateFromAnyVersion>
+  </UpdateSettings>
+
+</AppInstaller>

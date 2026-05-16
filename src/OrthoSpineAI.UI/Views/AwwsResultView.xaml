@@ -135,6 +135,40 @@
 
         <!-- Footer buttons -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <!-- Export PDF -->
+            <Button Content="🖨️ Eksportuj PDF"
+                    Command="{Binding ExportPdfCommand}"
+                    Margin="0,0,12,0" Padding="16,10"
+                    Background="#E3F2FD" Foreground="#1565C0"
+                    BorderThickness="1" BorderBrush="#90CAF9" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            <!-- Export report to file -->
+            <Button Content="📄 Eksportuj TXT"
+                    Command="{Binding ExportReportCommand}"
+                    Margin="0,0,12,0" Padding="16,10"
+                    Background="#E8F5E9" Foreground="#2E7D32"
+                    BorderThickness="1" BorderBrush="#A5D6A7" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
             <!-- Copy to clipboard -->
             <Button Content="📋 Kopiuj wynik"
                     Command="{Binding CopyToClipboardCommand}"

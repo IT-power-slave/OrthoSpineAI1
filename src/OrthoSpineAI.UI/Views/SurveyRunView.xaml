@@ -51,9 +51,40 @@
                 </StackPanel>
             </Border>
 
-            <!-- Measurement capture -->
+            <!-- Summary-mode panel (gap #10): shown for *.summary definitions; replaces measurement card -->
+            <Border Grid.Row="2" Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1"
+                    CornerRadius="6" Padding="16" Margin="0,0,0,14">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSummaryDefinition}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Text="📊 Podsumowanie badania" FontSize="15" FontWeight="SemiBold"
+                               Foreground="#2E7D32" Margin="0,0,0,8"/>
+                    <TextBlock Text="Przejrzyj wyniki poniżej. Naciśnij Zakończ badanie, aby obliczyć zalecenia AWWS."
+                               FontSize="12" Foreground="#388E3C" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Measurement capture (hidden for BTN_NEXT / BTN_RESET stages — no capture needed) -->
             <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
                     CornerRadius="6" Padding="16" Margin="0,0,0,14">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsBtnSampleStage}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" Width="160">
                         <Button Content="📌 Zapisz pomiar"
@@ -85,6 +116,31 @@
                             <Run Text="{Binding CapturedValue, StringFormat={}{0:F1}, Mode=OneWay}"/>
                             <Run Text="°"/>
                         </TextBlock>
+
+                        <!-- ISOM normative reference range -->
+                        <Border Margin="0,8,0,0" Padding="8,5" CornerRadius="4" Background="#F3E5F5">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasIsomReference}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock Text="Norma ISOM" FontSize="10" Foreground="#7B1FA2"
+                                           FontWeight="SemiBold" Margin="0,0,0,2"/>
+                                <TextBlock FontSize="12" Foreground="#4A148C">
+                                    <Run Text="↑ "/>
+                                    <Run Text="{Binding CurrentStage.ValueISOM1, StringFormat={}{0:F0}, Mode=OneWay}"/>
+                                    <Run Text="°  ↓ "/>
+                                    <Run Text="{Binding CurrentStage.ValueISOM3, StringFormat={}{0:F0}, Mode=OneWay}"/>
+                                    <Run Text="°"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -244,6 +300,155 @@
                         <Run Text=" V"/>
                     </TextBlock>
                 </StackPanel>
+
+                <Separator Margin="0,0,0,16"/>
+
+                <!-- Spine diagram — vertebra highlight for Adams stages -->
+                <Border Margin="0,0,0,16">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSpineDiagramVisible}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Text="Punkt pomiaru" FontSize="11" Foreground="#9E9E9E" Margin="0,0,0,8"/>
+                        <!-- C7 -->
+                        <Border CornerRadius="4" Padding="10,6" Margin="0,0,0,4">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HighlightC7}" Value="True">
+                                            <Setter Property="Background" Value="#1565C0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="C7"/>
+                                        <Setter Property="Foreground" Value="#424242"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HighlightC7}" Value="True">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <!-- TH6 -->
+                        <Border CornerRadius="4" Padding="10,6" Margin="0,0,0,4">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HighlightTH6}" Value="True">
+                                            <Setter Property="Background" Value="#1565C0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="TH6"/>
+                                        <Setter Property="Foreground" Value="#424242"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HighlightTH6}" Value="True">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <!-- TH12 -->
+                        <Border CornerRadius="4" Padding="10,6" Margin="0,0,0,4">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HighlightTH12}" Value="True">
+                                            <Setter Property="Background" Value="#1565C0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="TH12"/>
+                                        <Setter Property="Foreground" Value="#424242"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HighlightTH12}" Value="True">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <!-- L3 -->
+                        <Border CornerRadius="4" Padding="10,6" Margin="0,0,0,4">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HighlightL3}" Value="True">
+                                            <Setter Property="Background" Value="#1565C0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="L3"/>
+                                        <Setter Property="Foreground" Value="#424242"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HighlightL3}" Value="True">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <!-- S1 -->
+                        <Border CornerRadius="4" Padding="10,6" Margin="0,0,0,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HighlightS1}" Value="True">
+                                            <Setter Property="Background" Value="#1565C0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="S1"/>
+                                        <Setter Property="Foreground" Value="#424242"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HighlightS1}" Value="True">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                </Border>
 
                 <Separator Margin="0,0,0,16"/>
 

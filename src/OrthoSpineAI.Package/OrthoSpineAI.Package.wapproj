@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Application Packaging Project (.wapproj)
+  This project produces an MSIX package for OrthoSpineAI.
+
+  VERSION SYNC: PackageVersion here must always match <Version> in OrthoSpineAI.UI.csproj.
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Fallback paths when WapPkgInstallDir / AppxTargetsLocation are not set by Visual Studio -->
+  <PropertyGroup>
+    <WapPkgInstallDir Condition="'$(WapPkgInstallDir)' == ''">C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\DesktopBridge\</WapPkgInstallDir>
+    <AppxTargetsLocation Condition="'$(AppxTargetsLocation)' == ''">C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VisualStudio\v18.0\AppxPackage\</AppxTargetsLocation>
+  </PropertyGroup>
+
+  <Import Project="$(WapPkgInstallDir)Microsoft.DesktopBridge.props" />
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <ProjectGuid>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</ProjectGuid>
+    <ProjectName>OrthoSpineAI.Package</ProjectName>
+
+    <!-- Required by Visual Studio to recognize and load the project type -->
+    <TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+
+    <!-- ── Version (keep in sync with OrthoSpineAI.UI.csproj <Version>) ── -->
+    <PackageVersion>1.0.0.0</PackageVersion>
+
+    <!-- Publisher must match the Subject of your signing certificate -->
+    <PackageCertificateKeyFile>OrthoSpineAI.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>5B68A3B2B58FBD8929A62C2BADFF1F286345517A</PackageCertificateThumbprint>
+    <PackageCertificatePassword>DevCert123!</PackageCertificatePassword>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+    <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
+    <AppInstallerUri>https://your-server.example.com/releases</AppInstallerUri>
+    <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
+    <AppInstallerUpdateFrequency>1</AppInstallerUpdateFrequency>
+    <BuildAppInstallerFile>True</BuildAppInstallerFile>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <!-- Entry-point project for the MSIX package -->
+    <EntryPointProjectUniqueName>..\OrthoSpineAI.UI\OrthoSpineAI.UI.csproj</EntryPointProjectUniqueName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+
+  <!-- Reference to the WPF entry-point project -->
+  <ItemGroup>
+    <ProjectReference Include="..\OrthoSpineAI.UI\OrthoSpineAI.UI.csproj">
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Package assets (logo images) -->
+  <ItemGroup>
+    <Content Include="Assets\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <Import Project="$(WapPkgInstallDir)Microsoft.DesktopBridge.targets" />
+  <Import Project="$(AppxTargetsLocation)Microsoft.AppxPackage.Targets" />
+
+</Project>

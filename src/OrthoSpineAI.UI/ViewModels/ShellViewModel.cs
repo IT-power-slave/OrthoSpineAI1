@@ -127,30 +127,40 @@ public partial class ShellViewModel : ViewModelBase
     private void NavigateToSurveySelection(PatientDto patient)
     {
         var vm = new SurveySelectionViewModel(_surveyService, patient);
-        vm.SurveyStartRequested += (p, def) => NavigateToPreTest(p, def);
+        vm.SurveyStartRequested += (p, def, side) => NavigateToPreTest(p, def, side);
         vm.BackRequested += NavigateToPatientList;
         _ = vm.LoadAsync();
         CurrentPage = vm;
     }
 
-    private void NavigateToPreTest(PatientDto patient, SurveyDefinitionDto definition)
+    private void NavigateToPreTest(PatientDto patient, SurveyDefinitionDto definition, OrthoSpineAI.Domain.Enums.MedTestSide side)
     {
         var vm = new PreTestViewModel(patient, definition);
-        vm.Confirmed += preTest => _ = NavigateToSurveyRunAsync(preTest);
+        vm.Confirmed += preTest => _ = NavigateToSurveyRunAsync(preTest, side);
         vm.Cancelled += () => NavigateToSurveySelection(patient);
         CurrentPage = vm;
     }
 
-    private async Task NavigateToSurveyRunAsync(PreTestViewModel preTest)
+    private async Task NavigateToSurveyRunAsync(PreTestViewModel preTest, OrthoSpineAI.Domain.Enums.MedTestSide side)
     {
+        // Load the full definition group (e.g. backbone → backbone.1 → backbone.2 → backbone.summary).
+        // For single-stage surveys the group will contain only the selected definition.
+        var rootKey = preTest.Definition.Key.Split('.')[0];
+        var group = await _surveyService.GetSurveyGroupAsync(rootKey);
+        // The first definition to run is the one the clinician selected (or index 0 if not found).
+        var startDef = group.FirstOrDefault(d => d.Key == preTest.Definition.Key) ?? preTest.Definition;
+
         var userInfo = new SystemUserInfo(_loggedUser!.SystemUserId, _loggedUser.Login, _loggedUser.ClinicId);
         var vm = new SurveyRunViewModel(
             _medTestService, _device,
-            preTest.Patient, preTest.Definition, userInfo,
+            preTest.Patient, startDef, userInfo,
             weight: preTest.Weight, growth: preTest.Growth,
-            beighton: preTest.Beighton, testPP: preTest.TestPP,
+            beighton: preTest.Beighton, hs: preTest.Hs, testPP: preTest.TestPP,
             kneeValgus: preTest.KneeValgus, tarsalValgus: preTest.TarsalValgus,
-            gaitDisturbance: preTest.GaitDisturbance);
+            gaitDisturbance: preTest.GaitDisturbance,
+            side: side,
+            description: preTest.Description,
+            group: group);
         vm.SurveyCompleted += result => NavigateToAwwsResult(result, preTest.Patient);
         vm.Cancelled += NavigateToPatientList;
         CurrentPage = vm;
@@ -159,7 +169,7 @@ public partial class ShellViewModel : ViewModelBase
 
     private void NavigateToAwwsResult(AwwsResultDto result, PatientDto patient)
     {
-        var vm = new AwwsResultViewModel(result, patient);
+        var vm = new AwwsResultViewModel(result, patient, _medTestService);
         vm.BackToPatients += NavigateToPatientList;
         vm.NewSurveyRequested += NavigateToSurveySelection;
         CurrentPage = vm;

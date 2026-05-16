@@ -16,10 +16,12 @@ public partial class PreTestViewModel : ViewModelBase
     [ObservableProperty] private double _weight = 30;
     [ObservableProperty] private double _growth = 140;
     [ObservableProperty] private int _beighton;
+    [ObservableProperty] private int _hs;
     [ObservableProperty] private bool _testPP;
     [ObservableProperty] private bool _kneeValgus;
     [ObservableProperty] private bool _tarsalValgus;
     [ObservableProperty] private bool _gaitDisturbance;
+    [ObservableProperty] private string _description = string.Empty;
     [ObservableProperty] private string _validationMessage = string.Empty;
 
     public string BmiText
@@ -77,6 +79,11 @@ public partial class PreTestViewModel : ViewModelBase
         if (Beighton < 0 || Beighton > 9)
         {
             ValidationMessage = "Skala Beightona: wartość od 0 do 9.";
+            return;
+        }
+        if (Hs < 0 || Hs > 20)
+        {
+            ValidationMessage = "Hump Score: wartość od 0 do 20.";
             return;
         }
         Confirmed?.Invoke(this);
