@@ -35,3 +35,9 @@ $RECYCLE.BIN/
 .idea/
 *.swp
 *.swo
+
+# MSIX packaging
+*.pfx
+artifacts/
+src/OrthoSpineAI.Package/AppPackages/
+

@@ -16,6 +16,7 @@
 | [Database_Schema_Diagram.md](Database_Schema_Diagram.md) | Diagram ERD (Mermaid), relacje, problemy w schemacie | ✅ Kompletny |
 | [surveys/index.md](surveys/index.md) | Lista wszystkich badań, klucze DB, linki do dokumentacji badań | ✅ Kompletny |
 | **surveys/\*.md** | Szczegóły etapów każdego badania (backbone, spineScreening, shoulder…) | ✅ 15 plików |
+| [GAP_ANALYSIS.md](GAP_ANALYSIS.md) | Analiza luk między dokumentacją a implementacją — 19 pozycji z priorytetami i listą plików do zmiany | ✅ Aktualne |
 
 ---
 
